@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用互动示意理解人形机器人为什么启动时先扶住身体：摆姿势、双脚接地、平衡控制与外部辅助的区别。">
+  <meta name="theme-color" content="#f5f3ed">
+  <title>站稳之前｜人形机器人为什么要先扶一下？</title>
+  <style>
+    :root { --paper:#f5f3ed; --ink:#233631; --muted:#64736e; --teal:#17655d; --teal-pale:#e4eee7; --rust:#bd5736; --rust-pale:#f7e6dd; --blue:#356ba0; --line:#d9ded6; --white:#fffefa; --soft:#ebece4; --shadow:0 16px 50px #24382c08; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; font-size:16px; line-height:1.7; }
+    button,input,select { font:inherit; }
+    button,a,input,select { -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; }
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:3px solid var(--blue); outline-offset:4px; }
+    a { color:var(--teal); text-underline-offset:4px; }
+    button { color:inherit; }
+    [hidden] { display:none !important; }
+    .wrap { width:min(1120px,calc(100% - 64px)); margin:auto; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:28px 0 23px; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:12px; font-size:18px; font-weight:650; letter-spacing:1px; }
+    .brand-mark { display:grid; grid-template-columns:6px 6px; gap:3px; transform:rotate(-12deg); }
+    .brand-mark i { width:6px; height:16px; background:var(--teal); border-radius:3px; }
+    .brand-mark i:last-child { margin-top:6px; background:var(--rust); }
+    nav { display:flex; gap:24px; font-size:13px; }
+    nav a { color:var(--muted); text-decoration:none; }
+    nav a:hover { color:var(--teal); }
+    .hero { padding:64px 0 44px; display:grid; grid-template-columns:1.2fr .8fr; gap:48px; align-items:end; }
+    .eyebrow { font-size:12px; color:var(--teal); letter-spacing:2px; font-weight:650; margin:0 0 21px; }
+    h1 { font-size:clamp(35px,4.9vw,58px); line-height:1.2; letter-spacing:-2px; font-weight:650; margin:0; }
+    h1 span { color:var(--teal); }
+    .hero-aside { padding-bottom:4px; }
+    .hero-aside p { font-size:19px; line-height:1.8; margin:0 0 20px; }
+    .hero-aside small { color:var(--muted); font-size:13px; }
+    .intro-rule { display:block; height:3px; width:42px; background:var(--rust); margin:0 0 22px; }
+    section { scroll-margin-top:24px; }
+    .section-head { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:20px; }
+    .section-label { display:flex; gap:13px; align-items:center; font-weight:600; font-size:18px; }
+    .section-label .no { color:var(--rust); font-family:Georgia,serif; font-size:15px; }
+    .mode-tabs { display:flex; padding:4px; background:var(--soft); border-radius:99px; gap:3px; }
+    .mode-tabs button { border:0; background:transparent; border-radius:99px; padding:8px 17px; font-size:13px; color:var(--muted); }
+    .mode-tabs button[aria-selected="true"] { background:var(--ink); color:var(--white); }
+    .lesson { background:var(--white); border:1px solid var(--line); border-radius:24px; overflow:hidden; box-shadow:var(--shadow); }
+    .step-nav { display:grid; grid-template-columns:repeat(4,1fr); margin:0; padding:21px 26px; list-style:none; border-bottom:1px solid var(--line); gap:12px; }
+    .step-nav button { width:100%; display:flex; align-items:center; gap:10px; border:0; padding:8px 0; background:transparent; text-align:left; color:var(--muted); font-size:14px; }
+    .step-number { width:27px; height:27px; border-radius:50%; background:var(--soft); color:var(--muted); display:grid; place-items:center; font-size:12px; flex-shrink:0; }
+    .step-nav button[aria-current="step"] { color:var(--teal); font-weight:600; }
+    .step-nav button[aria-current="step"] .step-number { background:var(--teal); color:var(--white); }
+    .lab-top { padding:23px 28px; border-bottom:1px solid var(--line); }
+    .lab-presets { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+    .preset { border:1px solid var(--line); background:transparent; border-radius:8px; padding:7px 11px; font-size:13px; }
+    .preset:hover { background:var(--teal-pale); }
+    .lab-controls { display:flex; align-items:center; flex-wrap:wrap; gap:15px 28px; }
+    .switch-label { display:inline-flex; align-items:center; gap:9px; font-size:14px; cursor:pointer; min-height:36px; }
+    .switch-label input { width:18px; height:18px; accent-color:var(--teal); }
+    .control-field { display:flex; align-items:center; gap:10px; font-size:14px; }
+    select { padding:7px 27px 7px 9px; max-width:100%; border:1px solid var(--line); border-radius:7px; background:var(--white); color:var(--ink); }
+    .scene-layout { display:grid; grid-template-columns:1.18fr .82fr; }
+    .diagram-area { padding:22px 24px 20px; min-width:0; background:radial-gradient(ellipse at 50% 45%,#edf2e9 0%,var(--white) 70%); border-right:1px solid var(--line); }
+    .scene-top { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px; color:var(--muted); }
+    .scene-badge { color:var(--teal); background:var(--teal-pale); padding:3px 9px; border-radius:5px; }
+    .robot-svg { display:block; width:100%; height:auto; aspect-ratio:560 / 385; overflow:visible; }
+    .robot-svg .limb { stroke:var(--ink); stroke-width:15; stroke-linecap:round; stroke-linejoin:round; fill:none; }
+    .robot-svg .joint { fill:var(--white); stroke:var(--ink); stroke-width:4; }
+    .robot-svg .motor-active { fill:var(--rust-pale); stroke:var(--rust); }
+    .robot-svg .support-visual { stroke:var(--blue); }
+    .robot-svg .body-shell { fill:#dce6da; stroke:var(--ink); stroke-width:3; }
+    .robot-svg .face { fill:var(--ink); }
+    .robot-svg .force-gravity { stroke:var(--rust); fill:var(--rust); }
+    .robot-svg .force-ground { stroke:var(--teal); fill:var(--teal); }
+    .robot-svg .force-helper { stroke:var(--blue); fill:var(--blue); }
+    .legend { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:9px 21px; font-size:12px; color:var(--muted); }
+    .legend span { display:flex; align-items:center; gap:7px; }
+    .legend i { display:block; width:15px; height:3px; border-radius:3px; }
+    .legend .helper { background:var(--blue); }
+    .legend .gravity { background:var(--rust); }
+    .legend .ground { background:var(--teal); }
+    .diagram-note { font-size:11px; color:var(--muted); text-align:center; margin:10px 0 0; }
+    .explain-area { padding:36px 34px 28px; display:flex; flex-direction:column; }
+    .scene-kicker { color:var(--rust); font-size:12px; letter-spacing:1px; margin:0 0 13px; }
+    .explain-area h2 { font-size:27px; line-height:1.35; letter-spacing:-.5px; margin:0 0 16px; font-weight:600; }
+    #scene-description { color:var(--muted); font-size:15px; margin:0 0 24px; min-height:76px; }
+    .status-list { margin:0; }
+    .status-list > div { display:flex; justify-content:space-between; gap:14px; padding:10px 0; border-top:1px solid var(--line); font-size:13px; }
+    .status-list dt { color:var(--muted); }
+    .status-list dd { margin:0; text-align:right; font-weight:550; }
+    .scene-result { border-left:3px solid var(--teal); padding:0 0 0 12px; font-size:14px; margin:23px 0 0; }
+    .scene-result.warning { border-color:var(--rust); }
+    .actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:26px; }
+    .button { border:1px solid var(--line); border-radius:9px; background:var(--white); color:var(--ink); padding:9px 14px; font-size:13px; min-height:40px; }
+    .button.primary { border-color:var(--teal); background:var(--teal); color:var(--white); }
+    .button:hover { filter:brightness(.96); }
+    .button:disabled { cursor:default; opacity:.45; }
+    .lesson-footer { border-top:1px solid var(--line); padding:13px 28px; color:var(--muted); font-size:12px; }
+    .core { padding:56px 0 47px; }
+    .core-title { font-size:28px; letter-spacing:-.6px; margin:0 0 28px; font-weight:600; }
+    .core-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:30px; }
+    .core-item { border-top:2px solid var(--line); padding-top:19px; }
+    .mini-label { color:var(--rust); font-size:12px; letter-spacing:1px; }
+    .core-item h3 { font-size:19px; line-height:1.45; margin:12px 0 10px; font-weight:600; }
+    .core-item p { color:var(--muted); font-size:14px; margin:0; }
+    .takeaway { display:flex; align-items:center; gap:22px; padding:26px 31px; background:var(--teal-pale); border-radius:14px; margin-bottom:54px; }
+    .takeaway .quote { font-family:Georgia,serif; font-size:53px; color:var(--teal); height:47px; line-height:1.1; }
+    .takeaway p { margin:0; font-size:18px; color:var(--teal); }
+    .compare { padding-bottom:46px; }
+    .compare-intro { font-size:15px; color:var(--muted); margin:0 0 23px; }
+    .comparison { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .comparison article { padding:23px 25px; border-left:1px solid var(--line); }
+    .comparison article:first-child { padding-left:0; border-left:0; }
+    .compare-type { color:var(--teal); font-size:12px; font-weight:600; letter-spacing:1px; }
+    .comparison h3 { font-size:19px; margin:9px 0 12px; font-weight:600; }
+    .comparison p { color:var(--muted); font-size:14px; margin:0 0 14px; }
+    .comparison .analogy { color:var(--ink); margin:0; font-size:13px; }
+    .compare-note { font-size:12px; color:var(--muted); margin:17px 0 0; }
+    .faq { padding:0 0 43px; }
+    .faq h2 { font-size:25px; margin:0 0 18px; font-weight:600; }
+    details { border-top:1px solid var(--line); padding:15px 0; }
+    summary { cursor:pointer; font-size:15px; font-weight:550; }
+    details p { font-size:14px; color:var(--muted); margin:12px 0 0; max-width:870px; }
+    .source-section { padding:25px 0 33px; border-top:1px solid var(--line); }
+    .source-section h2 { font-size:13px; margin:0 0 12px; font-weight:600; color:var(--muted); }
+    .source-links { display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12px; }
+    .source-section p { font-size:11px; color:var(--muted); margin:14px 0 0; }
+    footer { display:flex; justify-content:space-between; gap:20px; padding:18px 0 26px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media (max-width:800px) {
+      .wrap { width:calc(100% - 40px); }
+      .hero { gap:30px; grid-template-columns:1fr; padding:42px 0 31px; }
+      .hero-aside p { font-size:17px; margin-bottom:12px; }
+      .intro-rule { display:none; }
+      .scene-layout { grid-template-columns:1fr 1fr; }
+      .diagram-area { padding:20px 14px; }
+      .explain-area { padding:25px 22px; }
+      .explain-area h2 { font-size:23px; }
+      .core-grid { gap:22px; }
+      .comparison article { padding:20px 18px; }
+    }
+    @media (max-width:620px) {
+      .wrap { width:calc(100% - 32px); }
+      header { padding:20px 0; }
+      .brand { font-size:16px; }
+      nav { gap:16px; font-size:12px; }
+      nav a:first-child { display:none; }
+      .hero { padding:34px 0 30px; gap:23px; }
+      h1 { letter-spacing:-1px; font-size:39px; }
+      .eyebrow { font-size:11px; letter-spacing:1.5px; margin-bottom:17px; }
+      .hero-aside p { font-size:16px; }
+      .section-head { align-items:flex-start; gap:14px; }
+      .section-label { font-size:16px; gap:8px; }
+      .mode-tabs button { padding:7px 10px; font-size:12px; min-height:35px; }
+      .lesson { border-radius:17px; }
+      .step-nav { padding:15px 13px; gap:4px; }
+      .step-nav button { flex-direction:column; gap:6px; text-align:center; font-size:12px; }
+      .scene-layout { grid-template-columns:1fr; }
+      .diagram-area { border-right:0; border-bottom:1px solid var(--line); padding:17px 17px 15px; }
+      .robot-svg { max-height:320px; }
+      .explain-area { padding:24px 22px; }
+      #scene-description { min-height:0; margin-bottom:20px; }
+      .explain-area h2 { font-size:25px; }
+      .legend { gap:9px 16px; font-size:12px; }
+      .lesson-footer { padding:13px 20px; }
+      .lab-top { padding:20px; }
+      .lab-controls { gap:8px 20px; }
+      .control-field { width:100%; margin-top:8px; flex-wrap:wrap; }
+      select { font-size:16px; }
+      .core { padding:38px 0 32px; }
+      .core-title { font-size:25px; margin-bottom:22px; }
+      .core-grid { grid-template-columns:1fr; gap:25px; }
+      .core-item { padding-top:15px; }
+      .core-item h3 { margin-top:8px; font-size:18px; }
+      .takeaway { padding:20px; gap:16px; margin-bottom:37px; }
+      .takeaway p { font-size:16px; }
+      .comparison { grid-template-columns:1fr; }
+      .comparison article,.comparison article:first-child { border-left:0; padding:22px 0; }
+      .comparison article + article { border-top:1px solid var(--line); }
+      .comparison p { margin-bottom:10px; }
+      .faq { padding-bottom:27px; }
+      .faq h2 { font-size:23px; }
+      footer { flex-direction:column; gap:4px; }
+    }
+    @media (max-width:360px) { h1 { font-size:34px; } .section-head { flex-direction:column; } nav { gap:10px; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      body { background:white; font-size:11pt; }
+      .wrap { width:100%; }
+      header { padding-top:0; }
+      nav,.mode-tabs,.actions,.lab-top { display:none; }
+      .hero { padding:25px 0; }
+      h1 { font-size:32pt; }
+      .lesson { box-shadow:none; }
+      .core,.compare,.faq { padding:25px 0; }
+      .takeaway { margin-bottom:25px; }
+      .lesson,.core-item,.comparison article,details { break-inside:avoid; }
+      details > p { display:block; }
+      a { color:inherit; }
+      .source-links { display:block; }
+      .source-links a { display:block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span>站稳之前</div>
+      <nav aria-label="页面导航"><a href="#lesson">看启动</a><a href="#difference">支撑差异</a><a href="#sources">来源</a></nav>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div><p class="eyebrow">人形机器人 / 3 分钟互动科普</p><h1 id="page-title">电机都开了，<br>为什么还要<span>扶一下？</span></h1></div>
+        <div class="hero-aside"><span class="intro-rule" aria-hidden="true"></span><p>先扶住，是给它时间摆好姿势，<br>再让双脚接住身体重量。</p><small>像扶着桌子起身：先放好脚，腿部用力，站稳后再松手。</small></div>
+      </section>
+
+      <section id="lesson" aria-labelledby="lesson-title">
+        <div class="section-head"><div class="section-label" id="lesson-title"><span class="no">01</span>看它怎样站起来</div><div class="mode-tabs" role="tablist" aria-label="演示方式"><button id="guide-tab" type="button" role="tab" aria-selected="true" aria-controls="lesson-panel">启动过程</button><button id="lab-tab" type="button" role="tab" aria-selected="false" aria-controls="lesson-panel">做个小实验</button></div></div>
+        <div class="lesson" id="lesson-panel" role="tabpanel" aria-labelledby="guide-tab">
+          <ol class="step-nav" id="step-nav" aria-label="启动阶段">
+            <li><button type="button" data-step="0" aria-current="step"><span class="step-number">1</span><span>先扶住</span></button></li>
+            <li><button type="button" data-step="1"><span class="step-number">2</span><span>摆好姿势</span></button></li>
+            <li><button type="button" data-step="2"><span class="step-number">3</span><span>脚接地</span></button></li>
+            <li><button type="button" data-step="3"><span class="step-number">4</span><span>自己站稳</span></button></li>
+          </ol>
+          <div class="lab-top" id="lab-controls" hidden>
+            <div class="lab-presets" aria-label="实验场景"><button type="button" class="preset" data-preset="air">悬空也开电机</button><button type="button" class="preset" data-preset="pose">站姿遇到轻推</button><button type="button" class="preset" data-preset="balance">让平衡控制接手</button></div>
+            <div class="lab-controls"><label class="switch-label"><input id="helper-toggle" type="checkbox" checked>辅助扶持</label><label class="switch-label"><input id="ground-toggle" type="checkbox">双脚接地</label><label class="control-field" for="motor-select">控制方式<select id="motor-select"><option value="off">电机尚未接管</option><option value="pose">只摆关节姿势</option><option value="balance">平衡策略运行</option></select></label></div>
+          </div>
+          <div class="scene-layout">
+            <div class="diagram-area">
+              <div class="scene-top"><span class="scene-badge" id="scene-badge">辅助扶持中</span><span>原理示意</span></div>
+              <svg class="robot-svg" id="robot-svg" viewBox="0 0 560 385" role="img" aria-labelledby="robot-title robot-description">
+                <title id="robot-title">人形机器人的启动辅助示意</title><desc id="robot-description">机器人由外部辅助扶持，双脚尚未接地，电机尚未接管。</desc>
+                <defs><pattern id="ground-pattern" width="14" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L10 0" stroke="#cdd5cd" stroke-width="1"/></pattern></defs>
+                <ellipse cx="280" cy="346" rx="100" ry="9" fill="#dbe1d5" opacity=".65"/>
+                <path d="M70 345H490" stroke="#8b9a8f" stroke-width="2"/>
+                <rect x="70" y="347" width="420" height="14" fill="url(#ground-pattern)"/>
+                <g id="support-drawing"></g><g id="robot-drawing"></g><g id="force-drawing"></g><g id="push-drawing"></g>
+              </svg>
+              <div class="legend" aria-label="箭头图例"><span><i class="helper"></i>辅助托力</span><span><i class="ground"></i>地面支撑</span><span><i class="gravity"></i>重力</span></div>
+              <p class="diagram-note">箭头仅表示方向，不表示力的大小。</p>
+            </div>
+            <div class="explain-area" aria-live="polite" aria-atomic="true">
+              <p class="scene-kicker" id="scene-kicker">第 1 步 / 先有外部支撑</p>
+              <h2 id="scene-heading">先让身体不倒</h2>
+              <p id="scene-description">控制还没准备好，先由吊绳或仿真中的辅助力托住身体，给后续摆姿势留出时间。</p>
+              <dl class="status-list"><div><dt>关节控制</dt><dd id="motor-status">电机尚未接管</dd></div><div><dt>脚与地面</dt><dd id="ground-status">尚未接触</dd></div><div><dt>外部辅助</dt><dd id="helper-status">正在扶持</dd></div></dl>
+              <p class="scene-result" id="scene-result">这时不倒，主要是外部支撑在帮忙。</p>
+              <div class="actions"><button class="button primary" id="next-button" type="button">下一步 →</button><button class="button" id="play-button" type="button">播放完整过程</button><button class="button" id="push-button" type="button" hidden>轻推一下</button><button class="button" id="reset-button" type="button" hidden>恢复初始状态</button></div>
+            </div>
+          </div>
+          <div class="lesson-footer">概念演示，不是动力学仿真。这里假设平地、合适的起始姿态；具体启动顺序随机器人和控制程序变化。</div>
+        </div>
+      </section>
+
+      <section class="core" aria-labelledby="core-title"><h2 class="core-title" id="core-title">电机能动，和身体能站稳，是两件事。</h2><div class="core-grid">
+        <article class="core-item"><span class="mini-label">关节层面</span><h3>摆姿势：身体怎么摆？</h3><p>电机把髋、膝、踝转到合适角度，让双腿形成站立姿势。这可以帮助承重，但还需要应对身体晃动和外界扰动。</p></article>
+        <article class="core-item"><span class="mini-label">接触层面</span><h3>撑起身体：力从哪里来？</h3><p>脚踩地面，地面才会托住身体。双脚悬空时，电机可以动四肢，却不能凭空产生持续向上的支撑力。</p></article>
+        <article class="core-item"><span class="mini-label">平衡层面</span><h3>站稳：要一直调整。</h3><p>平衡控制根据身体倾斜、运动速度和接触情况，不断调整关节动作。启动调试时，先扶一下能给摆姿势、接地和切换控制留出时间。</p></article>
+      </div></section>
+      <aside class="takeaway"><span class="quote" aria-hidden="true">“</span><p>扶着时站得住，说明有人在帮忙。<br>逐步撤掉扶持后仍能站稳，才是在检验它自己的平衡能力。</p></aside>
+
+      <section class="compare" id="difference" aria-labelledby="difference-title"><div class="section-head"><h2 class="section-label" id="difference-title"><span class="no">02</span>宇树和 SONIC，扶的地方不同吗？</h2></div><p class="compare-intro">要先分清：现实里的吊绳、仿真里的辅助力，以及机器人自己的平衡控制。</p><div class="comparison">
+        <article><span class="compare-type">现实中的辅助</span><h3>真机吊绳</h3><p>由实际吊装装置提供外力。宇树开源 RL 示例要求先摆好姿势、让脚接地，启动运动控制并稳定后，再逐渐放松吊绳。</p><p class="analogy">像有人用吊具扶着你。</p></article>
+        <article><span class="compare-type">宇树公开仿真示例</span><h3>扶住躯干</h3><p>G1 的虚拟弹力绳作用在躯干，通过弹簧和阻尼产生拉力。这份示例没有主动施加姿态纠正力矩。</p><p class="analogy">像从上方用弹力绳吊住。</p></article>
+        <article><span class="compare-type">SONIC 的 G1 仿真</span><h3>扶位置，也纠正转动</h3><p>腰部启用时作用在骨盆，否则作用在躯干。辅助力把位置拉回来，辅助力矩帮助纠正转动；关闭后，两者清零。</p><p class="analogy">像一双手扶着身体，还能帮忙摆正。</p></article>
+      </div><p class="compare-note">比较的是已公开的实现。扶持位置差异不能直接用来判断运控能力；宇树开源 RL 部署示例也不能直接代表出厂自带运控。</p></section>
+
+      <section class="faq" aria-labelledby="faq-title"><h2 id="faq-title">你可能还想问</h2>
+        <details open><summary>为什么常扶骨盆或躯干，而不是抓住手脚？</summary><p>这些部位方便稳住整个身体，同时给四肢留出活动空间。具体扶哪里取决于机器人结构和实现；虚拟辅助也可以施加纠正转动的力矩，并不等同于一根真实吊绳。</p></details>
+        <details><summary>双脚踩地、平衡策略开启，就一定不会倒吗？</summary><p>这只是具备了基本条件。真实效果还取决于起始姿态、地面、负载、电机能力、控制参数和策略的适用范围。网页展示的是原理，站稳需要通过实际测试确认。</p></details>
+        <details><summary>每个人形机器人，每次启动都要吊起来吗？</summary><p>不一定。具备完整起身和启动流程的机器人，可以自行站起。先扶住常用于新策略部署和调试，帮助完成摆姿势、接地与控制切换。</p></details>
+      </section>
+
+      <section class="source-section" id="sources" aria-labelledby="sources-title"><h2 id="sources-title">官方代码与说明</h2><div class="source-links">
+        <a href="https://github.com/unitreerobotics/unitree_rl_gym/blob/main/deploy/deploy_real/README.md" target="_blank" rel="noopener noreferrer">宇树 · 真机启动流程 ↗</a>
+        <a href="https://github.com/unitreerobotics/unitree_mujoco/blob/main/simulate_python/unitree_mujoco.py" target="_blank" rel="noopener noreferrer">宇树 · 仿真扶持位置 ↗</a>
+        <a href="https://github.com/unitreerobotics/unitree_mujoco/blob/main/simulate_python/unitree_sdk2py_bridge.py" target="_blank" rel="noopener noreferrer">宇树 · 弹力绳实现 ↗</a>
+        <a href="https://github.com/NVlabs/GR00T-WholeBodyControl/blob/main/gear_sonic/utils/mujoco_sim/base_sim.py" target="_blank" rel="noopener noreferrer">SONIC · 支撑开关与位置 ↗</a>
+        <a href="https://github.com/NVlabs/GR00T-WholeBodyControl/blob/main/gear_sonic/utils/mujoco_sim/unitree_sdk2py_bridge.py" target="_blank" rel="noopener noreferrer">SONIC · 辅助力与力矩 ↗</a>
+      </div><p>源码核对日期：2026-10-05。附着位置和启动步骤可能随配置、版本变化。图形是原理示意，不是 G1 的精确结构图。</p></section>
+    </main>
+    <footer><span>站稳之前 · 从“有人扶”到“自己站”</span><span>单文件互动科普 · 可离线打开</span></footer>
+  </div>
+  <script>
+  (() => {
+    'use strict';
+    const byId = id => document.getElementById(id);
+    const ui = Object.fromEntries(['guide-tab','lab-tab','lesson-panel','step-nav','lab-controls','helper-toggle','ground-toggle','motor-select','scene-badge','scene-kicker','scene-heading','scene-description','motor-status','ground-status','helper-status','scene-result','next-button','play-button','push-button','reset-button','robot-description','support-drawing','robot-drawing','force-drawing','push-drawing'].map(id=>[id,byId(id)]));
+    const stages = [
+      { helper:true, ground:false, motor:'off', kicker:'第 1 步 / 先有外部支撑', title:'先让身体不倒', description:'控制还没准备好，先由吊绳或仿真中的辅助力托住身体，给后续摆姿势留出时间。', result:'这时不倒，主要是外部支撑在帮忙。' },
+      { helper:true, ground:false, motor:'pose', kicker:'第 2 步 / 电机摆姿势', title:'腿摆好了，身体仍被扶着', description:'电机把髋、膝、踝等关节转到合适位置。但脚还没接地，身体重量仍由外部辅助承担。', result:'电机已经工作，和机器人已经能独立站稳，并不等同。' },
+      { helper:true, ground:true, motor:'pose', kicker:'第 3 步 / 下放到脚接地', title:'让双脚接住身体重量', description:'让脚接触地面，辅助仍然保留。电机通过双腿作用于地面，地面开始提供支撑。这个阶段先准备好接触条件。', result:'辅助与地面都可能提供支撑；承重比例随下放过程变化。' },
+      { helper:false, ground:true, motor:'balance', kicker:'第 4 步 / 平衡控制运行', title:'逐步撤掉扶持', description:'平衡控制开始持续调整。确认状态稳定后，逐渐减小辅助，让机器人承担自己的重量。图中展示的是辅助已撤掉的状态。', result:'现在才是在检验机器人自己的平衡能力。' }
+    ];
+    let mode='guide', step=0, lab={helper:true,ground:false,motor:'off'}, pushed=false, leaning=0, drop=0, playback=null, motionTimer=null;
+    const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const line=(x1,y1,x2,y2,cls='limb',extra='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}" ${extra}/>`;
+    const joint=(x,y,active)=>`<circle cx="${x}" cy="${y}" r="8" class="joint${active?' motor-active':''}"/>`;
+    const arrow=(x1,y1,x2,y2,cls)=>{
+      const a=Math.atan2(y2-y1,x2-x1),r=9,b=.48;
+      return `<g class="${cls}"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="3.5" stroke-linecap="round"/><path d="M${x2} ${y2}L${x2-r*Math.cos(a-b)} ${y2-r*Math.sin(a-b)}L${x2-r*Math.cos(a+b)} ${y2-r*Math.sin(a+b)}Z" stroke="none"/></g>`;
+    };
+    function current(){ return mode==='guide' ? stages[step] : lab; }
+    function cancelMotion(){ if(motionTimer!==null){clearTimeout(motionTimer);motionTimer=null;} leaning=0;drop=0;pushed=false; }
+    function stopPlayback(){ if(playback!==null){clearTimeout(playback);playback=null;} ui['play-button'].textContent='播放完整过程'; }
+    function draw(){
+      const s=current(), active=s.motor!=='off', loose=s.motor==='off';
+      const base=s.ground?0:-53;
+      const py=226+base+drop, px=280+leaning;
+      const ty=py-82, tx=px+leaning*.6;
+      const hy=ty-41,hx=tx+leaning*.2;
+      const feetY=s.ground?337:284+drop;
+      const feetX=loose?[257,303]:[233,327];
+      const hips=[px-22,px+22], knees=loose?[px-36,px+36]:[px-34,px+34];
+      const kneeY=py+53;
+      let robot=`<path class="body-shell" d="M${tx-29} ${ty-7} Q${tx} ${ty-14} ${tx+29} ${ty-7} L${px+24} ${py-17} Q${px} ${py-7} ${px-24} ${py-17}Z"/><rect x="${hx-22}" y="${hy-25}" width="44" height="47" rx="17" class="body-shell"/><rect x="${hx-14}" y="${hy-12}" width="28" height="12" rx="6" class="face"/><circle cx="${hx-6}" cy="${hy-6}" r="2" fill="#dce6da"/><circle cx="${hx+6}" cy="${hy-6}" r="2" fill="#dce6da"/>`;
+      robot+=line(tx,ty+8,px,py-18,'limb','stroke-width="7"');
+      robot+=`<rect x="${px-33}" y="${py-15}" width="66" height="27" rx="10" fill="#4e6858"/>`;
+      for(let i=0;i<2;i++){
+        const side=i?1:-1, sx=tx+side*35,sy=ty+5, ex=sx+side*(loose?11:21),ey=sy+43,wx=ex+side*(loose?-2:13),wy=ey+39;
+        robot+=line(sx,sy,ex,ey)+line(ex,ey,wx,wy)+joint(sx,sy,active)+joint(ex,ey,active);
+        robot+=line(hips[i],py,knees[i],kneeY)+line(knees[i],kneeY,feetX[i],feetY-12)+joint(hips[i],py,active)+joint(knees[i],kneeY,active)+joint(feetX[i],feetY-12,active);
+        robot+=`<rect x="${feetX[i]-21}" y="${feetY-7}" width="42" height="13" rx="5" fill="var(--ink)"/>`;
+      }
+      ui['robot-drawing'].innerHTML=robot;
+      ui['support-drawing'].innerHTML=s.helper?`<path d="M${px-38} ${py+7} Q${px-63} ${py-3} ${px-38} ${py-20} Q${px} ${py-34} ${px+38} ${py-20} Q${px+63} ${py-3} ${px+38} ${py+7}" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M${px-49} ${py-7} Q${px-65} 85 172 51M${px+49} ${py-7} Q${px+65} 85 388 51" fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="6 6"/><path d="M162 50H187M373 50H398" stroke="var(--blue)" stroke-width="5" stroke-linecap="round"/>`:'';
+      let force=arrow(px+100,py-55,px+100,py+25,'force-gravity');
+      if(s.helper) force+=arrow(px-93,py+20,px-93,py-55,'force-helper');
+      if(s.ground) {
+        force+=arrow(233,377,233,349,'force-ground')+arrow(327,377,327,349,'force-ground');
+        force+=`<ellipse cx="233" cy="346" rx="25" ry="3" fill="var(--teal)"/><ellipse cx="327" cy="346" rx="25" ry="3" fill="var(--teal)"/>`;
+      }
+      ui['force-drawing'].innerHTML=force;
+      ui['push-drawing'].innerHTML=pushed?arrow(tx-116,ty+15,tx-48,ty+15,'force-gravity'):'';
+      const desc=`${s.helper?'有外部辅助扶持':'外部辅助已撤掉'}；${s.ground?'双脚接地':'双脚悬空'}；${s.motor==='off'?'电机尚未接管':s.motor==='pose'?'关节在保持默认姿势':'平衡策略在运行'}。${drop?'身体仍在重力作用下下落。':''}${leaning?'身体受到轻推后倾斜。':''}`;
+      ui['robot-description'].textContent=desc;
+    }
+    function labCopy(){
+      const s=lab;
+      if(s.helper) return {title:'有人扶着，暂时不倒',description:'外部辅助正在托住身体。如果看到机器人稳住了，还要分清：是辅助在帮忙，还是机器人自己在保持平衡。',result:s.ground?'脚已接地，可以逐步转交身体重量。':'身体仍由辅助托住；电机可以先摆姿势。',badge:'辅助扶持中'};
+      if(!s.ground) return {title:'电机全开，也托不住悬空身体',description:'关节电机能让四肢运动，也能改变身体姿态。但没有脚与地面接触、也没有外部扶持，就没有持续向上的支撑。',result:'身体仍会受重力下落。动四肢不能代替外部支撑。',badge:'缺少向上的支撑'};
+      if(s.motor==='off') return {title:'脚接地了，双腿还没准备好承重',description:'本示意中的关节处于放松状态。脚接触地面，并不等于双腿已经能撑住身体；还需要合适的姿态和关节控制。',result:'先准备好承重姿态，再把重量交给双腿。',badge:'控制尚未准备好'};
+      if(s.motor==='pose') return {title:pushed?'一推，站姿就受到了挑战':'摆出站姿，还要应对晃动',description:pushed?'姿态控制会尝试保持关节角度，但轻推改变了整个身体的运动状态。是否能恢复，取决于姿态、接触和控制参数。':'默认姿态控制可以帮助承重。受到扰动后能否恢复，还取决于控制参数、接触条件和扰动大小。点“轻推一下”看看区别。',result:pushed?'示意中的身体发生倾斜；固定站姿不能保证每次都稳住。':'“摆得像在站立”和“能应对扰动”需要分别检验。',badge:pushed?'受扰动后可能失稳':'正在保持站姿'};
+      return {title:pushed?'平衡控制在持续调整':'让平衡控制接手',description:pushed?'平衡控制根据身体倾斜和运动情况调整关节动作。图中用先倾斜、再回正的过程，示意一次恢复平衡。':'脚已接地，辅助已撤掉，平衡策略持续调整。在合适的初始条件下，具备了自主站立的基本条件。',result:pushed?'能否实际恢复，还要看策略能力、扰动大小和机器人状态。':'具备基本条件，仍需要实际测试确认站稳。',badge:pushed?'示意：调整身体姿态':'平衡策略运行中'};
+    }
+    function render(){
+      const s=current(),isGuide=mode==='guide';
+      ui['guide-tab'].setAttribute('aria-selected',String(isGuide));ui['lab-tab'].setAttribute('aria-selected',String(!isGuide));
+      ui['lesson-panel'].setAttribute('aria-labelledby',isGuide?'guide-tab':'lab-tab');
+      ui['step-nav'].hidden=!isGuide;ui['lab-controls'].hidden=isGuide;
+      document.querySelectorAll('[data-step]').forEach(btn=>{if(Number(btn.dataset.step)===step)btn.setAttribute('aria-current','step');else btn.removeAttribute('aria-current');});
+      const c=isGuide?s:labCopy();
+      ui['scene-kicker'].textContent=isGuide?c.kicker:'小实验 / 改变启动条件';ui['scene-heading'].textContent=c.title;ui['scene-description'].textContent=c.description;
+      ui['scene-result'].textContent=c.result;ui['scene-result'].classList.toggle('warning',!s.helper&&(!s.ground||s.motor!=='balance'));
+      ui['scene-badge'].textContent=isGuide?(s.helper?'辅助扶持中':'辅助已撤掉'):c.badge;
+      ui['motor-status'].textContent=s.motor==='off'?'电机尚未接管':s.motor==='pose'?'保持关节姿势':'平衡策略持续调整';
+      ui['ground-status'].textContent=s.ground?'已经接触':'尚未接触';ui['helper-status'].textContent=s.helper?'正在扶持':'已撤掉辅助';
+      ui['next-button'].hidden=!isGuide;ui['play-button'].hidden=!isGuide;ui['push-button'].hidden=isGuide;ui['reset-button'].hidden=isGuide;
+      ui['next-button'].textContent=step===3?'从头看一次 ↺':'下一步 →';
+      ui['push-button'].disabled=!s.ground||s.motor==='off';
+      ui['helper-toggle'].checked=lab.helper;ui['ground-toggle'].checked=lab.ground;ui['motor-select'].value=lab.motor;
+      draw();
+    }
+    function showStep(n){ stopPlayback();cancelMotion();step=n;render(); }
+    function changeMode(next){ stopPlayback();cancelMotion();mode=next;if(next==='lab')lab={helper:currentGuide().helper,ground:currentGuide().ground,motor:currentGuide().motor};render();autoFall(); }
+    function currentGuide(){return stages[step];}
+    function animateFall(){
+      if(reducedMotion){drop=32;draw();return;}
+      const started=performance.now();
+      function frame(now){const t=Math.min((now-started)/750,1);drop=32*t*t;draw();if(t<1)motionTimer=setTimeout(()=>frame(performance.now()),20);else motionTimer=null;}
+      frame(started);
+    }
+    function autoFall(){if(mode==='lab'&&!lab.helper&&!lab.ground)animateFall();}
+    function editLab(){stopPlayback();cancelMotion();lab={helper:ui['helper-toggle'].checked,ground:ui['ground-toggle'].checked,motor:ui['motor-select'].value};render();autoFall();}
+    function play(){
+      if(playback!==null){stopPlayback();return;}
+      cancelMotion();step=0;render();ui['play-button'].textContent='暂停播放';
+      const advance=()=>{if(step<3){step++;render();ui['play-button'].textContent='暂停播放';playback=setTimeout(advance,2200);}else stopPlayback();};
+      playback=setTimeout(advance,2200);
+    }
+    function push(){
+      if(ui['push-button'].disabled)return;
+      cancelMotion();pushed=true;leaning=0;render();
+      const target=lab.helper?4:lab.motor==='balance'?12:24;
+      if(reducedMotion){leaning=lab.helper||lab.motor==='balance'?0:target;render();return;}
+      const started=performance.now();
+      function frame(now){
+        const elapsed=now-started;
+        if(elapsed<350)leaning=target*Math.sin((elapsed/350)*Math.PI/2);
+        else if(lab.helper||lab.motor==='balance')leaning=target*Math.max(0,1-(elapsed-350)/650);
+        else leaning=target;
+        draw();
+        if(elapsed<1000)motionTimer=setTimeout(()=>frame(performance.now()),20);else motionTimer=null;
+      }
+      frame(started);
+    }
+    document.querySelectorAll('[data-step]').forEach(btn=>btn.addEventListener('click',()=>showStep(Number(btn.dataset.step))));
+    ui['guide-tab'].addEventListener('click',()=>changeMode('guide'));ui['lab-tab'].addEventListener('click',()=>changeMode('lab'));
+    document.querySelectorAll('[role="tab"]').forEach(btn=>btn.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();const next=mode==='guide'?'lab':'guide';changeMode(next);ui[next+'-tab'].focus();}}));
+    ui['next-button'].addEventListener('click',()=>showStep((step+1)%4));ui['play-button'].addEventListener('click',play);ui['push-button'].addEventListener('click',push);
+    ui['reset-button'].addEventListener('click',()=>{cancelMotion();render();autoFall();});
+    ['helper-toggle','ground-toggle','motor-select'].forEach(id=>ui[id].addEventListener('change',editLab));
+    document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{cancelMotion();const p=btn.dataset.preset;lab={helper:false,ground:p!=='air',motor:p==='pose'?'pose':'balance'};render();autoFall();}));
+    render();
+  })();
+  </script>
+</body>
+</html>
